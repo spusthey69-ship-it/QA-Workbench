@@ -1,0 +1,348 @@
+<!doctype html><html lang="en" data-t="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QA Quality Intelligence Workbench</title>
+<!-- Libraries (official CDNs, pinned). The tool degrades gracefully: without SheetJS/Chart.js it falls back to its built-in .xlsx reader and SVG charts. -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<script src="https://alcdn.msauth.net/browser/2.14.2/js/msal-browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Yaru / Ubuntu-inspired desktop theme: aubergine wallpaper, top panel, dock sidebar, window-style cards */
+:root{--g1:#2c001e;--g2:#5e2750;--card:#2f2f2f;--bar:#3a3a3a;--fg:#f2f2f2;--mut:#b3aca5;--ln:#474747;--ac:#e95420;--ok:#3eb34f;--am:#f99b11;--rd:#ff6b6b;--hd:#fff;--r:12px}
+[data-t=light]{--g1:#f9e9f0;--g2:#fde0d2;--card:#fafafa;--bar:#ececec;--fg:#2e2e2e;--mut:#77706a;--ln:#dcdcdc;--hd:#3b1c32;--rd:#c7162b}
+*{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:#8a8a8a transparent}
+html,body{height:100%}
+body{margin:0;display:flex;flex-direction:column;background:linear-gradient(135deg,var(--g1),var(--g2)) fixed;color:var(--fg);font:14px/1.45 Ubuntu,"Ubuntu Sans",Cantarell,"Noto Sans",system-ui,sans-serif}
+:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+#pn{height:32px;flex:none;display:flex;align-items:center;gap:10px;padding:0 10px;background:#0d0d0d;color:#eee;font-size:13px;font-weight:500;z-index:9}
+#pn .ttl{flex:1;text-align:center;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pn button{background:transparent;border:0;color:#eee;border-radius:999px;padding:3px 12px;display:flex;align-items:center;gap:6px}
+#pn button:hover{background:rgba(255,255,255,.16)}#pn svg{width:15px;height:15px}
+#ws{flex:1;display:flex;min-height:0}
+nav{width:210px;flex:none;margin:10px 0 10px 10px;padding:12px 8px;overflow:auto;background:rgba(18,4,14,.72);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);border-radius:16px;box-shadow:0 8px 28px rgba(0,0,0,.35)}
+nav h1{font-size:14px;margin:2px 8px 10px;color:#fff;font-weight:700}nav h1::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--ac);margin-right:8px}
+nav a{display:flex;align-items:center;padding:7px 10px;margin:1px 0;border-radius:9px;color:#d9d2d6;cursor:pointer;transition:background .15s}
+nav a:hover{background:rgba(255,255,255,.1)}nav a.on{background:rgba(233,84,32,.24);color:#fff;font-weight:500;box-shadow:inset 3px 0 0 var(--ac)}
+nav small{display:block;margin:12px 8px 3px;color:rgba(255,255,255,.45);font-size:10px;text-transform:uppercase;letter-spacing:.08em}
+nav svg{width:15px;height:15px;margin-right:9px;flex:none}
+main{flex:1;overflow:auto;padding:10px 16px 24px;min-width:0}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+main>.bar{position:sticky;top:0;z-index:5;background:var(--card);border:1px solid var(--ln);border-radius:var(--r);padding:8px 10px;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+#v>.bar .mut{color:var(--hd)}
+button,select,.in{background:var(--bar);color:var(--fg);border:1px solid var(--ln);border-radius:8px;padding:6px 12px;font:inherit;cursor:pointer}
+button:hover,select:hover{border-color:var(--ac)}button.p{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:500}button.p:hover{filter:brightness(1.1)}.in{min-width:150px}
+h2{margin:0 0 12px;font-size:20px;font-weight:500;color:var(--hd)}h2 .mut{color:inherit;opacity:.7}
+.k{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.c{background:var(--card);border:1px solid var(--ln);border-radius:var(--r);padding:12px;margin-bottom:14px;overflow-x:auto;box-shadow:0 6px 20px rgba(0,0,0,.28)}
+.k .c{margin:0;border-top:3px solid var(--ac)}.k b{font-size:24px;display:block;font-weight:700}.k span{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+.c>h3{display:flex;align-items:center;gap:6px;margin:-12px -12px 10px;padding:8px 12px;background:var(--bar);border-bottom:1px solid var(--ln);border-radius:var(--r) var(--r) 0 0;font-size:12.5px;font-weight:700;color:var(--fg)}
+.c>h3::after{content:"";margin-left:auto;flex:none;width:52px;height:12px;background:radial-gradient(circle at 6px 6px,#8d8d8d 5px,transparent 5.5px),radial-gradient(circle at 26px 6px,#8d8d8d 5px,transparent 5.5px),radial-gradient(circle at 46px 6px,var(--ac) 5px,transparent 5.5px)}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}.g2 .c{margin:0}
+table{border-collapse:collapse;width:100%}td,th{padding:6px 8px;border-bottom:1px solid var(--ln);text-align:left;font-size:12px;vertical-align:top}
+th{color:var(--mut);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}tr:nth-child(even) td{background:rgba(127,127,127,.07)}tr:hover td{background:rgba(233,84,32,.13)}
+svg{width:100%;height:auto}.g{stroke:var(--ln)}.t{fill:var(--mut);font-size:10px}.mut{color:var(--mut)}
+.ok{color:var(--ok)}.am{color:var(--am)}.rd{color:var(--rd)}
+.dz{border:2px dashed var(--ln);border-radius:14px;padding:44px;text-align:center;cursor:pointer;color:var(--mut);transition:border-color .15s}.dz:hover{border-color:var(--ac)}.dz b{color:var(--fg);font-size:16px}
+.cn nav{display:none}
+@keyframes up{from{opacity:0;transform:translateY(6px)}}#v>*{animation:up .25s ease}
+@media(max-width:800px){html,body{height:auto}#ws{display:block}nav{width:auto;margin:8px;display:flex;flex-wrap:wrap;gap:4px}nav small{display:none}main{overflow:visible}main>.bar{position:static}}
+@media print{:root{--g1:#fff;--g2:#fff;--card:#fff;--bar:#fff;--fg:#000;--mut:#444;--ln:#ccc;--hd:#000}#pn,nav,.bar{display:none}body{display:block}#ws{display:block}main{overflow:visible}.c{break-inside:avoid;box-shadow:none}#v>*{animation:none}}
+/* Modern layout: flat, dense, indigo accent (Linear / Vercel style). Toggle with the palette button or Ctrl+K */
+[data-s=modern]{--g1:#0b0d12;--g2:#0b0d12;--card:#12151c;--bar:#181c26;--ln:#242938;--ac:#5e6ad2;--fg:#e8eaf0;--mut:#8a91a5;--hd:#e8eaf0;--r:8px}
+[data-s=modern][data-t=light]{--g1:#f7f8fa;--g2:#f7f8fa;--card:#fff;--bar:#f1f3f6;--ln:#e3e6ec;--fg:#1c2030;--mut:#6b7285;--hd:#1c2030}
+[data-s=modern] body{font-family:Inter,system-ui,sans-serif;font-size:13px}
+[data-s=modern] #pn{background:var(--card);border-bottom:1px solid var(--ln);color:var(--fg)}[data-s=modern] #pn button{color:var(--fg)}
+[data-s=modern] nav{background:var(--card);backdrop-filter:none;box-shadow:none;border:1px solid var(--ln);border-radius:10px}
+[data-s=modern] nav h1{color:var(--fg)}[data-s=modern] nav small{color:var(--mut)}[data-s=modern] nav a{color:var(--mut)}
+[data-s=modern] nav a:hover{background:var(--bar);color:var(--fg)}[data-s=modern] nav a.on{background:var(--bar);color:var(--fg);box-shadow:inset 2px 0 0 var(--ac)}
+[data-s=modern] .c,[data-s=modern] main>.bar{box-shadow:none}[data-s=modern] .c>h3::after{display:none}[data-s=modern] .k .c{border-top:1px solid var(--ln)}
+[data-s=modern] td,[data-s=modern] th{padding:4px 8px}[data-s=modern] h2{font-weight:600;font-size:18px}
+#cp{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;justify-content:center;align-items:flex-start;padding-top:12vh;z-index:99}#cp[hidden],#xp[hidden]{display:none}
+.cpb{width:min(560px,92vw);background:var(--card);border:1px solid var(--ln);border-radius:12px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+#cpi{width:100%;border:0;border-bottom:1px solid var(--ln);padding:14px;background:transparent;color:var(--fg);font:inherit;outline:0}
+#cpl{max-height:50vh;overflow:auto}#cpl div{padding:9px 14px;cursor:pointer}#cpl .on,#cpl div:hover{background:rgba(127,127,127,.18)}
+#xp{position:fixed;right:16px;bottom:16px;width:min(400px,92vw);max-height:62vh;overflow:auto;background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.4);z-index:50;white-space:pre-wrap}
+</style></head><body>
+<header id="pn"><button onclick="document.body.classList.toggle('cn')" title="Show / hide the dock"><i data-lucide="layout-grid"></i>Activities</button><span class="ttl">QA Quality Intelligence Workbench</span><button onclick="cpOpen()" title="Command palette"><i data-lucide="search"></i>Ctrl+K</button><button onclick="sty()" title="Switch layout: Ubuntu / Modern"><i data-lucide="palette"></i></button><span id="clk"></span><button onclick="tg()" title="Dark / light theme"><i data-lucide="sun-moon"></i></button></header><div id="ws">
+<nav><h1>QA Intelligence</h1><div id="nav"></div></nav>
+<main><div class="bar">
+<button class="p" onclick="f.click()">Upload workbook</button><input id="f" type="file" accept=".xlsx" hidden>
+<button onclick="demo()">Demo data</button><select id="rl" title="Role-based home screen" onchange="ROLE=this.value;cur='home';draw()"><option>Manager</option><option>Supervisor</option><option>Auditor</option></select><button onclick="explain()" title="Explain the current view with AI">✨ Explain</button>
+<input id="tt" class="in" type="number" step="0.5" min="1" max="100" placeholder="Target %" title="Accuracy target %" style="min-width:0;width:84px" oninput="if(M0&&this.value>0){M0.tgt=this.value/100;draw()}"><select id="s1"></select><select id="s4"></select><select id="s5"></select><select id="s2"></select><select id="s3"></select><span id="st" class="mut" style="font-size:11px"></span>
+<span style="flex:1"></span><button onclick="xlsOut()">Excel</button><button onclick="csvOut()">CSV</button><button onclick="pdfOut()">PDF</button><button onclick="pptOut()">PowerPoint</button></div>
+<div id="v"><div class="c dz" onclick="f.click()"><b>Drop the Acute AR Dashboard workbook here</b><br>or click to browse (.xlsx). Sheets are detected automatically; data never leaves your browser (except AI Copilot calls you trigger).</div></div></main></div>
+<div id="cp" hidden><div class="cpb"><input id="cpi" placeholder="Jump to a view or run an action… (Esc to close)"><div id="cpl"></div></div></div><aside id="xp" hidden></aside>
+<script>
+//CORE
+const inflate=async u=>{const d=new DecompressionStream('deflate-raw'),w=d.writable.getWriter();w.write(u);w.close();return new Uint8Array(await new Response(d.readable).arrayBuffer())};
+async function unzip(buf){const u=new Uint8Array(buf),dv=new DataView(buf),td=new TextDecoder();let e=u.length-22;while(dv.getUint32(e,true)!==0x06054b50)e--;
+const n=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true);const F={};
+for(let i=0;i<n;i++){const m=dv.getUint16(p+10,true),cs=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),xl=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),lo=dv.getUint32(p+42,true),nm=td.decode(u.subarray(p+46,p+46+nl));p+=46+nl+xl+cl;
+const st=lo+30+dv.getUint16(lo+26,true)+dv.getUint16(lo+28,true),d=u.subarray(st,st+cs);F[nm]=async()=>td.decode(m?await inflate(d):d)}return F}
+const un=s=>s.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#(\d+);/g,(_,c)=>String.fromCharCode(c)).replace(/&amp;/g,'&');
+const at=(s,k)=>(s.match(new RegExp('\\b'+k+'="([^"]*)"'))||[])[1];
+const col=r=>{let n=0;for(const ch of r.replace(/\d/g,''))n=n*26+ch.charCodeAt(0)-64;return n-1};
+async function readXlsx(buf){const F=await unzip(buf),g=async k=>F[k]?await F[k]():'';
+const ss=[...(await g('xl/sharedStrings.xml')).matchAll(/<si\b[\s\S]*?<\/si>/g)].map(m=>un([...m[0].matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map(x=>x[1]).join('')));
+const rels={};for(const m of (await g('xl/_rels/workbook.xml.rels')).matchAll(/<Relationship\b[^>]*>/g))rels[at(m[0],'Id')]=at(m[0],'Target').replace(/^\/?(xl\/)?/,'xl/');
+const out={};for(const m of (await g('xl/workbook.xml')).matchAll(/<sheet\b[^>]*>/g)){const nm=un(at(m[0],'name')),rid=at(m[0],'r:id'),x=await g(rels[rid]),rows=[];
+for(const rm of x.matchAll(/<row\b([^>]*)>([\s\S]*?)<\/row>/g)){const ri=+at(rm[1],'r')-1,row=[];
+for(const cm of rm[2].matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)){if(!cm[2])continue;const t=at(cm[1],'t'),ci=col(at(cm[1],'r')),v=(cm[2].match(/<v>([\s\S]*?)<\/v>/)||[])[1];let val;
+if(t=='s')val=ss[+v];else if(t=='inlineStr')val=un([...cm[2].matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map(z=>z[1]).join(''));else if(v==null)continue;else if(t=='str'||t=='e')val=un(v);else val=+v;row[ci]=val}
+rows[ri]=row}out[nm]=Array.from(rows,r=>r||[])}return out}
+const iso=v=>typeof v=='number'&&v>30000&&v<80000?new Date(Math.round((v-25569)*864e5)).toISOString().slice(0,10):(v?String(v).slice(0,10):'');
+const num=v=>typeof v=='number'?v:(parseFloat(String(v??'').replace(/[$,]/g,''))||0);
+function build(wb){const T=n=>{const r=wb[n]||[];let hi=0;for(let i=0;i<Math.min(r.length,15);i++)if((r[i]||[]).some(c=>/^emp\.?\s*id$/i.test(String(c).trim()))){hi=i;break}const h=r[hi]||[];return r.slice(hi+1).map(x=>{const o={};h.forEach((k,i)=>{if(k!=null&&k!=='')o[String(k).trim()]=x[i]});return o}).filter(o=>Object.keys(o).length)};
+const defs={};T('List of Defects').forEach(d=>{if(d['Error Category'])defs[String(d['Error Category']).trim()]=d});const dl={};Object.keys(defs).forEach(k=>dl[k.toLowerCase()]=k);const cn=c=>dl[c.toLowerCase()]||c;
+const dsh=wb.Dashboard||[],tgt=num((dsh[2]||[])[14])||.95,amb=num((dsh[3]||[])[14])||.05;
+const isNm=v=>typeof v==='string'&&/[A-Za-z]/.test(v),pick=(a,L)=>{for(const re of L)for(const k of Object.keys(a))if(re.test(k)&&isNm(a[k]))return String(a[k]).trim();return''},NR=[/associate.*name/i,/(employee|agent|emp).*name/i,/^(name|associate|employee)$/i],SR=[/supervisor.*name/i,/^(supervisor|team lead|tl)$/i],pn={};T('Production').forEach(p=>{const n=pick(p,NR);if(p['Emp ID']&&n)pn[p['Emp ID']]=n});const prod={};T('Production').forEach(p=>{if(p['Emp ID'])prod[p['Emp ID']]=(prod[p['Emp ID']]||0)+1});
+const R=T('Audit Data').filter(a=>a['Emp ID']&&a['Audit Status']).map(a=>{const raw=String(a['Error Categories']||'').trim(),cats=(!raw?[]:defs[raw]?[raw]:dl[raw.toLowerCase()]?[dl[raw.toLowerCase()]]:raw.split(/\s*[;\n|]\s*/).filter(Boolean)).map(cn);
+const st=String(a['Audit Status']),err=!/^no error$/i.test(st)||cats.length>0||num(a['# of Error'])>0,n=err?(num(a['# of Error'])||cats.length||1):0;
+const w=err?Math.max(...(cats.map(c=>defs[c]&&defs[c].Weightage!=null&&defs[c].Weightage!==''?num(defs[c].Weightage):1).concat(cats.length?[]:[1]))):0,billed=num(a['Total Billed Charges']);
+const ad=iso(a['Audit Date']),doj=iso(a['DOJ']),ten=num(a['Duration (months)'])||(doj&&ad?Math.max(0,(new Date(ad)-new Date(doj))/2629800000):0);
+return{emp:a['Emp ID'],name:pick(a,NR)||pn[a['Emp ID']]||('Emp '+a['Emp ID']),sup:pick(a,SR)||String(a['Supervisor Name']||''),mgr:a['Manager'],date:ad,week:a['Week']||'',act:a['Activity Type']||'',st,cats,err,n,w,billed,rev:err?(num(a['Revenue Impact'])||billed):0,ins:a['Insurance']||'(blank)',reb:String(a['Rebuttal']||'').trim(),dpo:num(a['DPO'])||1,acct:a['Account#'],fac:a['Facility'],ten,prod:prod[a['Emp ID']]}});
+const rd=iso((dsh[2]||[])[3])||R.map(r=>r.date).sort().pop()||'';
+return{R,defs,tgt,amb,rd,sheets:Object.keys(wb)}}
+//ENDCORE
+let M0=null,cur='home',ROLE='Manager',PAL=['#e95420','#c7162b','#f99b11','#3eb34f','#19b6ee'];
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),
+fmt=v=>Math.abs(v)>=1e6?(v/1e6).toFixed(1)+'M':Math.abs(v)>=1e3?(v/1e3).toFixed(1)+'k':(+(+v).toFixed(2))+'',pct=v=>v==null?'–':(v*100).toFixed(1)+'%',
+grp=(A,f)=>{const m=new Map();A.forEach(a=>{const k=f(a)??'(blank)';(m.get(k)||m.set(k,[]).get(k)).push(a)});return m},
+sum=(A,f)=>A.reduce((s,a)=>s+f(a),0),mean=a=>a.length?sum(a,x=>x)/a.length:0,sd=a=>{const m=mean(a);return Math.sqrt(mean(a.map(x=>(x-m)**2)))},
+none='<p class="mut">No data for current filters.</p>',$=s=>document.querySelector(s);
+const W=640,H=270,ML=46,MR=34,MT=14,MB=58,sc=(a,b,c,d)=>v=>c+(v-a)/((b-a)||1)*(d-c);
+function plotSVG(o){const L=o.labels,S=o.series,all=S.flatMap(s=>s.v).filter(v=>v!=null);if(!all.length)return none;
+const y0=o.y0??Math.min(0,...all),y1=o.y1??Math.max(...all,1)*1.1,n=L.length,bw=(W-ML-MR)/n,X=i=>ML+bw*(i+.5),Y=sc(y0,y1,H-MB,MT);let s=`<svg viewBox="0 0 ${W} ${H}">`;
+for(let i=0;i<=4;i++){const v=y0+(y1-y0)*i/4,y=Y(v);s+=`<line class="g" x1="${ML}" x2="${W-MR}" y1="${y}" y2="${y}"/><text class="t" x="${ML-5}" y="${y+3}" text-anchor="end">${(o.fy||fmt)(v)}</text>`;if(o.ry)s+=`<text class="t" x="${W-MR+4}" y="${y+3}">${i*25}%</text>`}
+L.forEach((l,i)=>{if(i%Math.ceil(n/24)==0)s+=`<text class="t" transform="translate(${X(i)},${H-MB+12}) rotate(30)">${esc(String(l).slice(0,16))}</text>`});
+S.forEach((q,k)=>{const c=q.c||PAL[k%5];if(q.bar)q.v.forEach((v,i)=>s+=`<rect x="${X(i)-bw*.35}" y="${Y(Math.max(v,0))}" width="${bw*.7}" height="${Math.abs(Y(0)-Y(v))}" fill="${c}"><title>${esc(L[i])}: ${fmt(v)}</title></rect>`);
+else{let d='';q.v.forEach((v,i)=>{if(v!=null)d+=(d?'L':'M')+X(i)+' '+Y(v)});s+=`<path d="${d}" fill="none" stroke="${c}" stroke-width="2" ${q.d?'stroke-dasharray="5 4"':''}/>`;if(!q.nop)q.v.forEach((v,i)=>{if(v!=null)s+=`<circle cx="${X(i)}" cy="${Y(v)}" r="3" fill="${c}"><title>${esc(L[i])}: ${fmt(v)}</title></circle>`})}});
+let lx=ML;S.forEach((q,k)=>{if(q.n){s+=`<text class="t" style="fill:${q.c||PAL[k%5]}" x="${lx}" y="${H-4}">● ${esc(q.n)}</text>`;lx+=q.n.length*6+24}});return s+'</svg>'}
+function scatSVG(P,xl,yl){if(P.length<2)return none;const xs=P.map(p=>p.x),ys=P.map(p=>p.y);let x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);if(x0==x1)x1=x0+1;if(y0==y1)y1=y0+1;
+const X=sc(x0,x1,ML+8,W-MR-8),Y=sc(y0,y1,H-MB+16,MT+6);let s=`<svg viewBox="0 0 ${W} ${H}">`;
+for(let i=0;i<=4;i++){const y=Y(y0+(y1-y0)*i/4);s+=`<line class="g" x1="${ML}" x2="${W-MR}" y1="${y}" y2="${y}"/><text class="t" x="${ML-5}" y="${y+3}" text-anchor="end">${fmt(y0+(y1-y0)*i/4)}</text><text class="t" x="${X(x0+(x1-x0)*i/4)}" y="${H-MB+32}" text-anchor="middle">${fmt(x0+(x1-x0)*i/4)}</text>`}
+const mx=mean(xs),my=mean(ys),sxx=sum(xs,x=>(x-mx)**2),sxy=sum(P,p=>(p.x-mx)*(p.y-my)),syy=sum(ys,y=>(y-my)**2),b=sxx?sxy/sxx:0,r=sxx&&syy?sxy/Math.sqrt(sxx*syy):0;
+P.forEach(p=>s+=`<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="4" fill="${PAL[0]}" opacity=".75"><title>${esc(p.t)}: ${fmt(p.x)}, ${fmt(p.y)}</title></circle>`);
+s+=`<line x1="${X(x0)}" y1="${Y(my+b*(x0-mx))}" x2="${X(x1)}" y2="${Y(my+b*(x1-mx))}" stroke="${PAL[1]}" stroke-dasharray="5 4" stroke-width="2"/><text class="t" x="${ML}" y="${H-4}">X: ${esc(xl)} · Y: ${esc(yl)} · r = ${r.toFixed(2)} (${Math.abs(r)>.5?'notable':'weak'} correlation, n=${P.length})</text></svg>`;return s}
+/* ---- Chart.js layer: views queue chart specs (CQ); mount() instantiates them after the HTML is in the DOM ---- */
+let CQ=[],CH=[];
+function plot(o){const all=o.series.flatMap(q=>q.v).filter(v=>v!=null);if(!all.length)return none;
+if(typeof Chart==='undefined'){const mx=Math.max(...o.series.filter(q=>!q.cum).flatMap(q=>q.v),1)*1.1;return plotSVG({...o,ry:o.series.some(q=>q.cum),series:o.series.map(q=>q.cum?{...q,v:q.v.map(v=>v*mx/100)}:q)})}
+const id='ch'+CQ.length;CQ.push({id,o});return`<div style="position:relative;height:280px"><canvas id="${id}"></canvas></div>`}
+function scat(P,xl,yl){if(P.length<2)return none;if(typeof Chart==='undefined')return scatSVG(P,xl,yl);
+const xs=P.map(p=>p.x),ys=P.map(p=>p.y),mx=mean(xs),my=mean(ys),sxx=sum(xs,x=>(x-mx)**2),sxy=sum(P,p=>(p.x-mx)*(p.y-my)),syy=sum(ys,y=>(y-my)**2),b=sxx?sxy/sxx:0,r=sxx&&syy?sxy/Math.sqrt(sxx*syy):0,x0=Math.min(...xs),x1=Math.max(...xs);
+const id='ch'+CQ.length;CQ.push({id,sc:{P,xl,yl,ln:[{x:x0,y:my+b*(x0-mx)},{x:x1,y:my+b*(x1-mx)}]}});
+return`<div style="position:relative;height:280px"><canvas id="${id}"></canvas></div><p class="mut">Trend line r = ${r.toFixed(2)} (${Math.abs(r)>.5?'notable':'weak'} correlation, n=${P.length})</p>`}
+function mount(){CH.forEach(c=>c.destroy());CH=[];const cs=getComputedStyle(document.documentElement),tc=cs.getPropertyValue('--mut').trim(),gc=cs.getPropertyValue('--ln').trim(),tk={color:tc},gr={color:gc};
+CQ.forEach(({id,o,sc})=>{const el=document.getElementById(id);if(!el)return;let cfg;
+if(sc)cfg={type:'scatter',data:{datasets:[{label:'Associates',data:sc.P.map(p=>({x:p.x,y:p.y})),backgroundColor:PAL[0]},{label:'Trend',data:sc.ln,type:'line',showLine:true,pointRadius:0,borderColor:PAL[1],borderDash:[5,4]}]},
+options:{responsive:true,maintainAspectRatio:false,scales:{x:{title:{display:true,text:sc.xl,color:tc},ticks:tk,grid:gr},y:{title:{display:true,text:sc.yl,color:tc},ticks:tk,grid:gr}},plugins:{legend:{labels:{color:tc}},tooltip:{callbacks:{label:c=>c.datasetIndex?'Trend':`${sc.P[c.dataIndex].t}: ${fmt(c.parsed.x)}, ${fmt(c.parsed.y)}`}}}}};
+else{const cum=o.series.some(q=>q.cum);cfg={type:'bar',data:{labels:o.labels,datasets:o.series.map((q,k)=>{const c=q.c||PAL[k%5];return q.bar?{type:'bar',label:q.n||'',data:q.v,backgroundColor:c,yAxisID:'y'}:{type:'line',label:q.n||'',data:q.v,borderColor:c,backgroundColor:c,borderDash:q.d?[5,4]:[],pointRadius:q.nop?0:3,borderWidth:2,tension:0,yAxisID:q.cum?'y2':'y'}})},
+options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{...tk,maxRotation:40},grid:gr},y:{min:o.y0,max:o.y1,beginAtZero:o.y0===0,ticks:tk,grid:gr},y2:{display:cum,position:'right',min:0,max:100,ticks:{...tk,callback:v=>v+'%'},grid:{drawOnChartArea:false}}},plugins:{legend:{labels:{color:tc,filter:i=>!!i.text}}}}}}
+CH.push(new Chart(el,cfg))})}
+const C=(t,h)=>`<div class="c"><h3>${t}</h3>${h}</div>`,tbl=(h,r)=>r.length?`<table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${r.map(x=>`<tr>${x.map(y=>`<td>${y}</td>`).join('')}</tr>`).join('')}</table>`:none;
+let R=[],DR=[];
+const PBY={c:['Defect category',d=>d.c],a:['Associate',d=>d.r.name],s:['Supervisor',d=>d.r.sup],i:['Insurance',d=>d.r.ins],q:['CTQ',d=>d.d.CTQ||'Unmapped']};let PB='c';
+/* ---- AI Copilot ---- */
+let AIS={prov:'m365',key:'',url:'https://api.openai.com/v1/chat/completions',model:'claude-sonnet-5-5',names:false},AIR='';
+const SN=()=>{try{return JSON.parse(localStorage.qasnap||'{}')}catch(e){return{}}};
+function snapSave(){const l=$('#sl').value||M0.rd||'snapshot',k=kpi(R),o=SN();o[l]={acc:k.acc,e:k.e,n:k.n,dpu:k.dpu,rev:k.rev,top:pareto().slice(0,3)};try{localStorage.qasnap=JSON.stringify(o)}catch(e){alert('Could not save snapshot in this browser.')}draw()}
+function snapDel(l){const o=SN();delete o[l];try{localStorage.qasnap=JSON.stringify(o)}catch(e){}draw()}
+function aiPrompt(){const k=kpi(R),m={},nm=x=>AIS.names?x:(m[x]=m[x]||'Associate '+(Object.keys(m).length+1)),tp=(f,l)=>[...grp(R,f)].map(([n,a])=>{const x=kpi(a);return{who:l?l(n):n,audits:x.n,defects:x.e,accuracy:+(x.acc*100).toFixed(1)}}).sort((a,b)=>b.defects-a.defects).slice(0,5);
+const data={target_accuracy:M0.tgt,kpis:{audits:k.n,defects:k.e,accuracy_pct:+(k.acc*100).toFixed(1),dpu:+(k.dpu||0).toFixed(3),dpo:+k.dpo.toFixed(3),revenue_exposure:Math.round(k.rev)},
+top_defects:pareto().slice(0,10).map(([c,n])=>({category:c,count:n,ctq:M0.defs[c]?.CTQ,activity:M0.defs[c]?.['Activity Type'],impact:M0.defs[c]?.['Revenue Impact'],definition:M0.defs[c]?.Explanation})),top_associates:tp(r=>r.name,nm),top_supervisors:tp(r=>r.sup),top_payers:tp(r=>r.ins)};
+return'You are a healthcare revenue-cycle (AR follow-up) quality analyst and Six Sigma Black Belt. Using ONLY the JSON data below, return ONLY a JSON object with keys: summary (string, 3 sentences), five_whys (array for the top 3 defects: {defect, whys:[exactly 5 strings, each deeper than the last], root_cause_category: one of People|Process|System|Materials}), capa (array: {defect, corrective, preventive, owner_role, due_days:number}). No markdown.\nDATA: '+JSON.stringify(data)}
+function aiHTML(j){return C('AI summary',`<p>${esc(j.summary||'')}</p>`)+(j.five_whys||[]).map(f=>C('5 Why — '+esc(f.defect)+` <span class="mut">[${esc(f.root_cause_category||'')}]</span>`,'<ol>'+(f.whys||[]).map(x=>`<li>${esc(x)}</li>`).join('')+'</ol>')).join('')+C('AI CAPA suggestions',tbl(['Defect','Corrective','Preventive','Owner','Due (days)'],(j.capa||[]).map(c=>[esc(c.defect),esc(c.corrective),esc(c.preventive),esc(c.owner_role),esc(c.due_days)])))}
+/* ---- Sign in with Microsoft (MSAL.js popup, delegated Graph scopes required by the Copilot Chat API) ---- */
+const MSSC=['Sites.Read.All','Mail.Read','People.Read.All','OnlineMeetingTranscript.Read.All','Chat.Read','ChannelMessage.Read.All','ExternalItem.Read.All'];
+const lsGet=k=>{try{return localStorage[k]||''}catch(e){return''}},lsSet=(k,v)=>{try{localStorage[k]=v}catch(e){}};
+let MSA={app:null,acct:null,key:'',cid:lsGet('qacid'),tid:lsGet('qatid')||'organizations'};
+async function msApp(){if(typeof msal==='undefined')throw Error('MSAL library did not load (check CDN access).');if(!MSA.cid.trim())throw Error('Enter the app (client) ID first.');
+if(location.protocol=='file:')throw Error('Sign-in needs this page hosted on https:// or http://localhost (not opened as a file).');
+if(!MSA.app||MSA.key!=MSA.cid+MSA.tid){MSA.app=new msal.PublicClientApplication({auth:{clientId:MSA.cid.trim(),authority:'https://login.microsoftonline.com/'+(MSA.tid.trim()||'organizations'),redirectUri:location.href.split(/[?#]/)[0]},cache:{cacheLocation:'sessionStorage'}});MSA.key=MSA.cid+MSA.tid;if(MSA.app.initialize)await MSA.app.initialize()}return MSA.app}
+async function msIn(){try{const a=await msApp(),r=await a.loginPopup({scopes:MSSC});MSA.acct=r.account;AIR=''}catch(e){AIR=`<div class="c rd">Sign-in failed: ${esc(e.message)}</div>`}draw()}
+async function msOut(){try{await (await msApp()).logoutPopup({account:MSA.acct})}catch(e){}MSA.acct=null;draw()}
+async function msToken(){if(MSA.acct){const a=await msApp(),q={scopes:MSSC,account:MSA.acct};try{return(await a.acquireTokenSilent(q)).accessToken}catch(e){return(await a.acquireTokenPopup(q)).accessToken}}
+if(AIS.key)return AIS.key;throw Error('Sign in with Microsoft, or paste a Graph token, in the AI Copilot tab.')}
+function msUI(){return`<div class="bar"><input class="in" placeholder="App (client) ID" value="${esc(MSA.cid)}" oninput="MSA.cid=this.value;lsSet('qacid',this.value)"><input class="in" placeholder="Tenant ID or domain" value="${esc(MSA.tid)}" oninput="MSA.tid=this.value;lsSet('qatid',this.value)">${MSA.acct?`<button onclick="msOut()">Sign out</button><span class="ok">● ${esc(MSA.acct.username)}</span>`:'<button class="p" onclick="msIn()">Sign in with Microsoft</button>'}</div>${location.protocol=='file:'?'<p class="rd">This page is open as a file. Microsoft sign-in cannot redirect to a file, so host the page on https:// or http://localhost and register that exact URL as a Single-page application redirect URI. Until then, paste a token above.</p>':''}<p class="mut">Needs an Entra app registration (platform: Single-page application) with these delegated Microsoft Graph permissions, admin-consented: ${MSSC.join(', ')}. Pasting a token above still works as a fallback.</p>`}
+/* One shared transport for every provider; returns the model's text */
+async function aiAsk(pr){const an=AIS.prov=='anthropic',ms=AIS.prov=='m365';let r;
+if(an){if(!AIS.key)throw Error('Enter an API key.');r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':AIS.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:AIS.model,max_tokens:2500,messages:[{role:'user',content:pr}]})})}
+else if(ms){const H={'content-type':'application/json',authorization:'Bearer '+await msToken()},G='https://graph.microsoft.com/beta/copilot/conversations',c=await fetch(G,{method:'POST',headers:H,body:'{}'});
+if(!c.ok)throw Error('HTTP '+c.status+' creating conversation: '+(await c.text()).slice(0,200));const cv=await c.json();
+r=await fetch(G+'/'+cv.id+'/chat',{method:'POST',headers:H,body:JSON.stringify({message:{text:pr},locationHint:{timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone}})})}
+else{const h={'content-type':'application/json'};if(AIS.key)h.authorization='Bearer '+AIS.key;r=await fetch(AIS.url,{method:'POST',headers:h,body:JSON.stringify({model:AIS.model,messages:[{role:'user',content:pr}]})})}
+if(!r.ok)throw Error('HTTP '+r.status+' '+(await r.text()).slice(0,200));const d=await r.json();
+return an?d.content.map(x=>x.text||'').join(''):ms?((d.messages||[]).filter(m=>/Response/i.test(m['@odata.type']||'')).pop()||{}).text||'':d.choices[0].message.content}
+async function aiRun(){if(!M0)return;if(!DR.length){AIR='<div class="c rd">No defects in the current selection to analyse.</div>';return draw()}AIR='<div class="c">Contacting model…</div>';draw();
+try{const t=await aiAsk(aiPrompt());let j;try{j=JSON.parse(t.slice(t.indexOf('{'),t.lastIndexOf('}')+1))}catch(e){AIR=C('AI response (was not valid JSON, shown as text)',`<div style="white-space:pre-wrap">${esc(t)}</div>`);return draw()}AIR=aiHTML(j)}
+catch(e){AIR=`<div class="c rd">AI request failed: ${esc(e.message)}</div>`}draw()}
+/* "Explain this view": sends the on-screen text + chart data (after confirmation) to the selected provider */
+async function explain(){if(!M0)return;const x=$('#xp'),ttl=(NAV.find(n=>n[1]==cur)||[''])[0];
+if(!confirm('Send the text and chart data currently on screen ('+ttl+') to the selected AI provider? It may include associate names and account numbers.'))return;
+const ch=JSON.stringify(CQ.map(({o,sc})=>o?{labels:o.labels,series:o.series.map(q=>({name:q.n,values:q.v.map(v=>v==null?null:+(+v).toFixed(2))}))}:{scatter:sc.P.slice(0,40)})).slice(0,3000),tx=($('#v').innerText||'').replace(/\n\s*\n+/g,'\n').slice(0,3500);
+x.hidden=false;x.textContent='✨ Explaining…';
+try{const t=await aiAsk('You are a healthcare RCM quality analyst. Explain this dashboard view for a busy supervisor: what it shows, 3 key takeaways, and one recommended action. Use only the data below; plain text, under 150 words.\nVIEW: '+ttl+'\nTEXT: '+tx+'\nCHARTS: '+ch);x.innerHTML='<b>✨ '+esc(ttl)+'</b> <a style="float:right;cursor:pointer" onclick="$(\'#xp\').hidden=true">✕</a>\n\n'+esc(t)}
+catch(e){x.innerHTML='<b class="rd">AI request failed:</b> '+esc(e.message)+' <a style="float:right;cursor:pointer" onclick="$(\'#xp\').hidden=true">✕</a>'}}
+
+const kpi=A=>{const n=A.length,e=sum(A,r=>r.n),op=sum(A,r=>r.dpo)||1,dpmo=e/op*1e6,sg=e?Math.max(0,.8406+Math.sqrt(Math.max(0,29.37-2.221*Math.log(dpmo)))):6;return{dpmo,sg,n,e,ea:A.filter(r=>r.err).length,acc:n?1-sum(A,r=>r.w)/n:null,dpu:n?e/n:null,dpo:e/op,rev:sum(A,r=>r.rev)}};
+const ac=a=>a==null?'':a>=M0.tgt?'ok':a>=M0.tgt-M0.amb?'am':'rd';
+const pareto=()=>[...grp(DR,d=>d.c)].map(([k,a])=>[k,a.length]).sort((a,b)=>b[1]-a[1]);
+const days=()=>[...grp(R,r=>r.date)].filter(x=>x[0]).sort((a,b)=>a[0]<b[0]?-1:1);
+function score(f,lbl){const rows=[...grp(R,f)].map(([k,a])=>({k,...kpi(a)})).sort((a,b)=>(a.acc??1)-(b.acc??1)),t=rows.slice(0,20);
+return C(`Accuracy by ${lbl} — lowest first (BQM target ${pct(M0.tgt)})`,plot({labels:t.map(r=>r.k),series:[{bar:1,v:t.map(r=>r.acc*100),n:'Accuracy %'},{v:t.map(_=>M0.tgt*100),d:1,nop:1,c:PAL[1],n:'Target'}],y0:0,y1:100}))+
+C(lbl+' scorecard',tbl([lbl,'Audits','Defects','Accuracy','DPU','DPO','Revenue impact'],rows.map(r=>[esc(r.k),r.n,r.e,`<b class="${ac(r.acc)}">${pct(r.acc)}</b>`,r.dpu.toFixed(2),r.dpo.toFixed(2),'$'+fmt(r.rev)])))}
+const FBK=['fishbone','fishbone category','4m','cause category','root cause category'],FBR=[['Equipment / System',/\b(system|portal|eligib|eiq|action log|bdc|code|tool)/],['Materials',/\b(document|sop|note|instruction|info|payer|insurance|eob|record)/]],FBL=['People','Process','Equipment / System','Materials'];
+let FBO={};try{FBO=JSON.parse(localStorage.qafb||'{}')}catch(e){}
+const FBN=v=>{v=String(v||'').toLowerCase();return /peopl|^man\b/.test(v)?'People':/system|equip|machine|tool/.test(v)?'Equipment / System':/material/.test(v)?'Materials':/process|method/.test(v)?'Process':''};
+/* Fishbone placement, in priority order: 1 your override, 2 a Fishbone/4M column in List of Defects, 3 keyword rule (matched keyword shown), 4 default Process */
+function bone(c){if(FBO[c]&&FBL.includes(FBO[c]))return{b:FBO[c],s:'Your override'};const d=M0.defs[c]||{};for(const k of Object.keys(d))if(FBK.includes(k.toLowerCase())){const b=FBN(d[k]);if(b)return{b,s:'Workbook column "'+k+'"'}}
+const t=(c+' '+(d.CTQ||'')+' '+(d['Activity Type']||'')).toLowerCase();for(const[b,re]of FBR){const m=t.match(re);if(m)return{b,s:'Keyword "'+m[0].trim()+'"'}}return{b:'Process',s:'Default - no keyword matched'}}
+function fbSet(c,v){if(v)FBO[c]=v;else delete FBO[c];try{localStorage.qafb=JSON.stringify(FBO)}catch(e){}draw()}
+function fishMap(){const P=pareto();return tbl(['Defect category','Defects','Fishbone branch','Decided by','Change'],P.map(([c,n])=>{const x=bone(c);return[esc(c),n,'<b>'+esc(x.b)+'</b>',esc(x.s),`<select onchange="fbSet(decodeURIComponent('${encodeURIComponent(c)}'),this.value)"><option value="">Auto</option>${FBL.map(b=>`<option${FBO[c]==b?' selected':''}>${b}</option>`).join('')}</select>`]}))+'<p class="mut">People branch = associates with the most defects across all categories (a defect appears under its own branch and also counts toward its associate). Other branches list the top 3 categories with counts. Keyword placement is a heuristic: add a "Fishbone" column (People / Process / System / Materials) to List of Defects, or use the Change dropdown, to make placement exact.</p>'}
+function fish(){const P=pareto();if(!P.length)return none;const top=(a,f)=>[...grp(a,f)].sort((x,y)=>y[1].length-x[1].length).slice(0,3).map(x=>x[0]+' ('+x[1].length+')');
+const by=b=>DR.filter(d=>bone(d.c).b==b),bones=[['People',top(DR,d=>d.r.name),DR.length]].concat(['Process','Equipment / System','Materials'].map(b=>[b,top(by(b),d=>d.c),by(b).length]));
+let s=`<svg viewBox="0 0 760 340"><line x1="30" y1="170" x2="630" y2="170" stroke="var(--fg)" stroke-width="3"/><rect x="630" y="145" width="120" height="50" rx="8" fill="${PAL[1]}"/><text x="690" y="175" text-anchor="middle" fill="#fff" font-size="13">Defects ${DR.length}</text>`;
+bones.forEach(([k,cs,tt],i)=>{const up=i%2==0,x=90+Math.floor(i/2)*190,y=up?30:310;s+=`<line x1="${x}" y1="${y}" x2="${x+70}" y2="170" stroke="var(--mut)" stroke-width="2"/><text x="${x-20}" y="${up?18:330}" font-weight="700" font-size="12" fill="${PAL[2]}">${esc((k+' · '+tt).slice(0,30))}</text>`;
+cs.forEach((c,j)=>{const t=(j+1)/4;s+=`<text x="${x+70*t-150*0+4}" y="${y+(170-y)*t*(1)+3}" class="t" style="font-size:10px;fill:var(--fg)" text-anchor="end" transform="translate(-6,0)">${esc(String(c).slice(0,34))}</text>`})});return s+'</svg>'}
+const logT=q=>{q=q.toLowerCase();const E=R.filter(r=>r.err&&(!q||JSON.stringify([r.name,r.acct,r.cats,r.ins,r.sup,r.reb]).toLowerCase().includes(q)));return tbl(['Date','Associate','Account','Insurance','Category','Revenue','Rebuttal'],E.slice(0,200).map(r=>[r.date,esc(r.name),esc(r.acct),esc(r.ins),esc(r.cats.join('; ')),'$'+fmt(r.rev),esc(r.reb)]))+(E.length>200?`<p class="mut">Showing 200 of ${E.length}.</p>`:'')};
+const flt=()=>{$('#lg').innerHTML=logT($('#q').value)};
+const impact=d=>d.d['Revenue Impact']||'Unmapped';
+
+/* ---- Per-account 5 Why / CAPA: every line is computed from the workbook rows of that account, associate and defect ---- */
+let WA='',WH=[];
+function whySel(){const n=[...new Set(R.filter(r=>r.err).map(r=>r.name))].sort();if(WA&&!n.includes(WA))WA='';return`<div class="bar"><span class="mut">Associate</span><select onchange="WA=this.value;draw()"><option value="">All associates (grouped)</option>${n.map(x=>`<option${x==WA?' selected':''}>${esc(x)}</option>`).join('')}</select><span class="mut">One card per errored audit / account.</span></div>`}
+function whyData(r,c){const A=M0.all,e=esc,unc=c=='(Uncategorised)',has=x=>unc?(x.err&&!x.cats.length):x.cats.includes(c),d=M0.defs[c]||{},mine=A.filter(x=>x.emp==r.emp&&x.err),same=mine.filter(has),all=A.filter(has),ppl=new Set(all.map(x=>x.emp)),team=all.filter(x=>x.sup==r.sup),
+oth=same.filter(x=>x!==r).map(x=>x.acct||'(no #)'),na=new Set(A.map(x=>x.emp)).size,tot=A.filter(x=>x.emp==r.emp).length;
+const l=[['What happened',`Account ${e(r.acct||'(blank)')} (${e(r.ins)}${r.fac?', '+e(r.fac):''}) was audited on ${e(r.date||'unknown date')}${r.week?' ('+e(r.week)+')':''} with status "${e(r.st)}". Defect: "${e(c)}".${d.Explanation?' Definition: '+e(d.Explanation):''}`],
+['Requirement broken',unc?'The audit is marked as an error but no Error Category was entered, so it is counted as 1 defect with weight 1.':d.CTQ||d['Activity Type']?`CTQ "${e(d.CTQ||'n/a')}", activity "${e(d['Activity Type']||r.act||'n/a')}", weightage ${e(d.Weightage??'n/a')}, impact class ${e(d['Revenue Impact']||'n/a')}. Revenue impact of this account: $${fmt(r.rev)}.`:`"${e(c)}" is not in List of Defects, so CTQ and weightage are unknown (scored with weight 1). Revenue impact of this account: $${fmt(r.rev)}.`],
+['Associate pattern',`${e(r.name)} has ${mine.length} errored audit(s) out of ${tot}. "${e(c)}" is on ${same.length} of them`+(oth.length?` (other accounts: ${e(oth.slice(0,8).join(', '))}${oth.length>8?' ...':''}).`:' - this is the only one.')],
+['Spread across team and organisation',`"${e(c)}" occurs ${all.length} time(s) across ${ppl.size} of ${na} associate(s); ${team.length} of them under supervisor ${e(r.sup||'(blank)')}.`],
+['Follow-up and context',`Rebuttal outcome: ${e(r.reb||'none recorded')}. Tenure: ${r.ten?r.ten.toFixed(1)+' months':'not in workbook'}. Production volume: ${r.prod??'not in workbook'}.`]];
+let k,h;if(ppl.size>=Math.max(3,Math.ceil(na/2))){k='wide';h=`Widespread: ${ppl.size} of ${na} associates have this defect, which points to a process / system / material gap rather than one individual.`}
+else if(same.length>=3){k='rep';h=`Repeat: ${same.length} of ${e(r.name)}'s errored accounts carry this defect, which points to an individual skill / knowledge gap (People).`}
+else{k='iso';h=`Isolated: ${same.length} occurrence for ${e(r.name)}, which points to a one-off lapse. Confirm with the associate before concluding.`}
+return{c,d,l,k,h,b:bone(c),ppl:ppl.size,same:same.length}}
+function acctCard(r){const cs=r.cats.length?r.cats:['(Uncategorised)'];return`<div class="c"><h3>Account ${esc(r.acct||'(blank)')} - ${esc(r.name)} - ${esc(r.date||'no date')}</h3>`+cs.map(c=>{const w=whyData(r,c);return`<p><b>${esc(c)}</b> <span class="mut">- Fishbone: ${esc(w.b.b)} (${esc(w.b.s)})</span></p><ol>${w.l.map(x=>`<li><b>${x[0]}:</b> ${x[1]}</li>`).join('')}</ol><p class="am"><b>Indicated cause</b> (rule-based from the pattern above; validate with the team): ${w.h}</p>`}).join('<hr style="border:0;border-top:1px solid var(--ln)">')+'</div>'}
+function whFill(el,i){const b=el.querySelector('div');if(el.open&&!b.dataset.f){b.dataset.f=1;b.innerHTML=WH[i][1].map(acctCard).join('')}}
+function capaAcct(){const rd=new Date(M0.rd||Date.now()),dd=n=>new Date(rd.getTime()+n*864e5).toISOString().slice(0,10),rows=[];
+R.filter(r=>r.err&&(!WA||r.name==WA)).forEach(r=>(r.cats.length?r.cats:['(Uncategorised)']).forEach(c=>rows.push([r,whyData(r,c)])));
+return C(`CAPA per account${WA?' - '+esc(WA):''} (${rows.length} account-defect line(s))`,tbl(['Associate','Account','Defect','Corrective (fix now)','Preventive (stop recurrence)','Owner','Due'],rows.slice(0,300).map(([r,w])=>{const q=esc(w.d.CTQ||w.c),a=esc(r.acct||'(blank)');return[esc(r.name),a,esc(w.c),`Re-work account ${a} ($${fmt(r.rev/(r.cats.length||1))} impact); give feedback to ${esc(r.name)}.`,w.k=='wide'?`Process / system fix: checklist or hard-stop for ${q} (${w.ppl} associates affected).`:w.k=='rep'?`1:1 coaching on ${q}; re-audit their next 10 accounts (${w.same} repeats).`:`Feedback and recheck at next audit on ${q}.`,esc(r.sup),dd(7)+' / '+dd(30)]}))+(rows.length>300?`<p class="mut">Showing 300 of ${rows.length}; pick an associate to see all.</p>`:''))}
+
+const V={
+insights(){const k=kpi(R),P=pareto(),o=[];if(!k.n)return none;
+o.push(`Accuracy is <b>${pct(k.acc)}</b>, ${k.acc>=M0.tgt?'above':'below'} the ${pct(M0.tgt)} target by ${Math.abs((k.acc-M0.tgt)*100).toFixed(1)} pts.`);
+if(!P.length)return'<ul><li>'+o[0]+'</li><li>No defects recorded for the current filters.</li></ul>';
+let cu=0;const vf=P.filter(x=>(cu+=x[1])-x[1]<.8*DR.length).length;
+o.push(`<b>${esc(P[0][0])}</b> is the top defect (${pct(P[0][1]/DR.length)} of defects); ${vf} of ${P.length} categories drive ~80%.`);
+const A=[...grp(R,r=>r.name)].map(([n,a])=>({n,...kpi(a)})).filter(a=>a.n>=5).sort((a,b)=>a.acc-b.acc);
+if(A.length)o.push(`Lowest associate: <b>${esc(A[0].n)}</b> at ${pct(A[0].acc)}; ${A.filter(a=>a.acc<M0.tgt-M0.amb).length} associate(s) are in the red band.`);
+const S=[...grp(R,r=>r.sup)].map(([n,a])=>({n,...kpi(a)})).sort((a,b)=>a.acc-b.acc);if(S.length>1)o.push(`Lowest supervisor team: <b>${esc(S[0].n)}</b> at ${pct(S[0].acc)}.`);
+const D=days();if(D.length>=4){const l=D.slice(-3).flatMap(d=>d[1]),e=D.slice(0,-3).flatMap(d=>d[1]),dl=(kpi(l).acc-kpi(e).acc)*100;o.push(`Last 3 days vs earlier: accuracy ${dl>=0?'up':'down'} ${Math.abs(dl).toFixed(1)} pts.`)}
+const np=R.filter(r=>r.err&&!r.reb).length;if(np)o.push(`${np} errored audit(s) have no rebuttal outcome recorded yet.`);
+o.push(`Revenue impact is <b>$${fmt(k.rev)}</b> across ${k.ea} errored account(s).`);return'<ul>'+o.map(x=>'<li>'+x+'</li>').join('')+'</ul>'},
+coach(){const rows=[...grp(R,r=>r.name)].map(([n,a])=>({n,a,...kpi(a)})).filter(x=>x.acc<M0.tgt).sort((a,b)=>a.acc-b.acc);
+return C(`Coaching list — associates below ${pct(M0.tgt)} target`,tbl(['Associate','Supervisor','Audits','Accuracy','Top defect','Suggested focus'],rows.map(x=>{const t=[...grp(x.a.flatMap(r=>r.cats),c=>c)].sort((p,q)=>q[1].length-p[1].length)[0];return[esc(x.n),esc(x.a[0].sup),x.a.length,`<b class="${ac(x.acc)}">${pct(x.acc)}</b>`,t?esc(t[0])+' ('+t[1].length+')':'–',t?'1:1 coaching + calibration on '+esc(M0.defs[t[0]]?.CTQ||t[0]):'Review audits']})))},
+log(){return C('Errored audit log',`<input id="q" placeholder="Search associate, account, category, insurance…" oninput="flt()" style="width:100%;margin-bottom:8px;background:var(--card);color:var(--fg);border:1px solid var(--ln);border-radius:6px;padding:6px 10px"><div id="lg">${logT('')}</div>`)},
+heat(){const P=pareto().slice(0,8).map(x=>x[0]),A=[...grp(R.filter(r=>r.err),r=>r.name)].sort((a,b)=>b[1].length-a[1].length).slice(0,15);if(!P.length)return C('Heatmap',none);
+const cnt=(a,c)=>a.flatMap(r=>r.cats).filter(x=>x==c).length,mx=Math.max(1,...A.flatMap(([n,a])=>P.map(c=>cnt(a,c))));
+return C('Heatmap — associate × defect category (defect count; darker = more)','<table><tr><th>Associate</th>'+P.map(c=>`<th title="${esc(c)}">${esc(c.slice(0,14))}</th>`).join('')+'<th>Total</th></tr>'+A.map(([n,a])=>`<tr><td>${esc(n)}</td>${P.map(c=>{const v=cnt(a,c);return`<td style="text-align:center;background:rgba(255,93,93,${(v/mx*.85).toFixed(2)})">${v||''}</td>`}).join('')}<td><b>${a.flatMap(r=>r.cats).length}</b></td></tr>`).join('')+'</table>')},
+dq(){const A=M0.all,ex=['Dashboard','Accuracy','Audit Data','Production','List of Defects','Database','Audit Calc','Calc'],ck=(l,n,note='')=>[l,n?'<b class="am">⚠ '+n+'</b>':'<b class="ok">✓ 0</b>',note],un=[...new Set(A.flatMap(r=>r.cats).filter(c=>!M0.defs[c]))];
+return C('Sheet detection',tbl(['Sheet','Status'],ex.map(x=>[x,M0.sheets.includes(x)?'<span class="ok">✓ found</span>':'<span class="rd">✗ missing</span>'])))+C('Data-quality checks (all rows, ignoring filters)',tbl(['Check','Result','Impact'],[['Audit rows parsed',A.length,''],ck('Errored audits with no category',A.filter(r=>r.err&&!r.cats.length).length,'Counted as 1 defect, weight 1'),ck('Categories missing from List of Defects',un.length,esc(un.slice(0,5).join('; '))),ck('Missing supervisor',A.filter(r=>!r.sup).length,'Grouped as (blank)'),ck('Missing audit date',A.filter(r=>!r.date).length,'Excluded from trend charts'),ck('Missing insurance',A.filter(r=>r.ins=='(blank)').length),ck('Duplicate account #',A.length-new Set(A.map(r=>r.acct)).size,'May double-count'),ck('Errored audits with $0 revenue impact',A.filter(r=>r.err&&!r.rev).length)]))},
+snap(){const o=SN(),k=kpi(R),L=Object.keys(o),dl=(a,b)=>a==null||b==null?'–':`<b class="${a>=b?'ok':'rd'}">${a>=b?'+':''}${((a-b)*100).toFixed(1)} pts</b>`;
+return C('Save current view as a snapshot (stored in this browser) to compare months',`<div class="bar"><input id="sl" class="in" placeholder="Label, e.g. ${esc(M0.rd||'November')}" value="${esc(M0.rd||'')}"><button class="p" onclick="snapSave()">Save snapshot</button></div>`)+
+(L.length?C('Accuracy across snapshots',plot({labels:[...L,'Current'],series:[{v:[...L.map(l=>o[l].acc*100),k.acc*100],n:'Accuracy %'},{v:[...L,'x'].map(_=>M0.tgt*100),d:1,nop:1,c:PAL[1],n:'Target'}],y0:0,y1:100}))+C('Snapshot comparison (Δ = current minus snapshot)',tbl(['Snapshot','Audits','Defects','Accuracy','Δ accuracy','DPU','Revenue','Top defects',''],L.map(l=>{const x=o[l];return[esc(l),x.n,x.e,pct(x.acc),dl(k.acc,x.acc),(x.dpu||0).toFixed(2),'$'+fmt(x.rev),esc((x.top||[]).map(t=>t[0]).join('; ')),`<button onclick="snapDel(decodeURIComponent('${encodeURIComponent(l)}'))">Delete</button>`]}))):'<p class="mut">No snapshots yet.</p>')},
+ai(){const o=(v,l)=>`<option value="${v}"${AIS.prov==v?' selected':''}>${l}</option>`;
+return C('AI Copilot — sends aggregated defect summaries only (associate names anonymised unless ticked)',`<div class="bar"><select onchange="AIS.prov=this.value;draw()">${o('m365','Microsoft 365 Copilot (Graph API, beta)')}${o('anthropic','Anthropic API')}${o('openai','OpenAI-compatible / your proxy')}</select><input class="in" type="password" placeholder="${AIS.prov=='m365'?'Microsoft Graph access token':'API key (memory only)'}" value="${esc(AIS.key)}" oninput="AIS.key=this.value">${AIS.prov=='m365'?'':`<input class="in" placeholder="Model" value="${esc(AIS.model)}" oninput="AIS.model=this.value">`}${AIS.prov=='openai'?`<input class="in" style="min-width:280px" placeholder="Endpoint URL" value="${esc(AIS.url)}" oninput="AIS.url=this.value">`:''}<label><input type="checkbox" ${AIS.names?'checked':''} onchange="AIS.names=this.checked"> include names</label><button class="p" onclick="aiRun()">Run AI RCA</button></div>${AIS.prov=='m365'?msUI():''}<p class="mut">${AIS.prov=='m365'?'Microsoft 365 Copilot Chat API (Graph /beta, delegated work-account token, Copilot licence required; Microsoft marks beta APIs as not supported for production). Paste a short-lived access token from your tenant\'s approved sign-in flow; it is kept in memory only and sent only to graph.microsoft.com. Copilot may ground answers in your Microsoft 365 data, so the prompt tells it to use only the supplied summary.':''}</p><p class="mut">Calling an LLM straight from the browser exposes your key to this page. For production, point an OpenAI-compatible endpoint at your own proxy that holds the key (leave the key blank). Payload = KPIs, top defect categories, top associates/supervisors/payers — no account numbers.</p>`)+(AIR||'')},
+home(){return this[{Manager:'overview',Supervisor:'coach',Auditor:'log'}[ROLE]]()+this[{Manager:'sup',Supervisor:'heat',Auditor:'dq'}[ROLE]]()},
+overview(){const k=kpi(R),D=days(),c=(l,v,x='')=>`<div class="c"><span>${l}</span><b class="${x}">${v}</b></div>`;
+return C('Key insights',this.insights())+`<div class="k">${c('Audits',k.n)}${c('Error audits',k.ea)}${c('Defects',k.e)}${c('Accuracy',pct(k.acc),ac(k.acc))}${c('DPU',k.dpu==null?'–':k.dpu.toFixed(3))}${c('DPO',k.dpo.toFixed(3))}${c('DPMO',k.n?fmt(k.dpmo):'–')}${c('Sigma level',!k.n?'–':k.e?k.sg.toFixed(2):'6.0+')}${c('Revenue impact','$'+fmt(k.rev))}</div><div class="g2">`+
+C('Daily accuracy',plot({labels:D.map(d=>d[0]),series:[{v:D.map(d=>kpi(d[1]).acc*100),n:'Accuracy %'},{v:D.map(_=>M0.tgt*100),d:1,nop:1,c:PAL[1],n:'Target'}],y0:0,y1:100}))+C('Top defects (Pareto)',this.pareto(1))+'</div>'},
+check(){const P=pareto(),W_=[...new Set(R.map(r=>r.week))].sort();return C('Check Sheet — defect tally by category and week',tbl(['Error category','CTQ',...W_,'Total'],P.map(([c,n])=>[esc(c),esc(M0.defs[c]?.CTQ||''),...W_.map(w=>{const x=DR.filter(d=>d.c==c&&d.r.week==w).length;return x?'|'.repeat(Math.min(x,5)).replace(/(\|{5})/,'卌')+' '+x:''}),'<b>'+n+'</b>'])))},
+pareto(m){const P=m?pareto():[...grp(DR,PBY[PB][1])].map(([k,a])=>[k,a.length]).sort((a,b)=>b[1]-a[1]),T=sum(P,x=>x[1]);let cu=0;const cp=P.map(x=>(cu+=x[1])/T),vf=P.filter((x,i)=>i==0||cp[i-1]<.8);
+const h=P.length?plot({labels:P.map(x=>x[0]),series:[{bar:1,v:P.map(x=>x[1]),n:'Defects'},{cum:1,v:cp.map(v=>v*100),c:PAL[2],n:'Cumulative %'},{cum:1,v:P.map(_=>80),d:1,nop:1,c:PAL[1],n:'80% line'}],y0:0}):none;
+return m?h:'<div class="bar"><span class="mut">Pareto by</span><select onchange="PB=this.value;draw()">'+Object.entries(PBY).map(([k,v])=>`<option value="${k}"${k==PB?' selected':''}>${v[0]}</option>`).join('')+'</select></div>'+C('Pareto — defects by '+PBY[PB][0].toLowerCase()+' with cumulative % (80/20)',h)+C(`Vital few: ${vf.length} of ${P.length} categories drive ~80% of defects`,tbl(['Category','Count','Cum %'],vf.map(x=>[esc(x[0]),x[1],pct(cp[P.indexOf(x)])])))},
+hist(){const bin=(a,k)=>{if(!a.length)return null;const lo=Math.min(...a),hi=Math.max(...a),w=(hi-lo)/k||1,b=Array(k).fill(0);a.forEach(v=>b[Math.min(k-1,Math.floor((v-lo)/w))]++);return{l:b.map((_,i)=>'$'+fmt(lo+i*w)),v:b}};
+const e=[0,1,2,3].map(i=>R.filter(r=>i==3?r.n>=3:r.n==i).length),h=bin(R.filter(r=>r.err).map(r=>r.rev),8);
+return'<div class="g2">'+C('Histogram — errors per audit',plot({labels:['0','1','2','3+'],series:[{bar:1,v:e}]}))+C('Histogram — revenue impact of errored audits',h?plot({labels:h.l,series:[{bar:1,v:h.v,c:PAL[2]}]}):none)+'</div>'},
+scatter(){const A=[...grp(R,r=>r.name)].map(([k,a])=>({k,a,...kpi(a)}));return'<div class="g2">'+C('Scatter — Production volume vs defects (per associate)',scat(A.filter(x=>x.a[0].prod).map(x=>({t:x.k,x:x.a[0].prod,y:x.e})),'Production count','Defects'))+C('Scatter — Tenure (months) vs accuracy %',scat(A.filter(x=>x.a[0].ten).map(x=>({t:x.k,x:mean(x.a.map(r=>r.ten)),y:x.acc*100})),'Tenure','Accuracy %'))+'</div>'},
+control(){const D=days(),k=D.map(d=>kpi(d[1])),pb=sum(k,x=>x.ea)/(sum(k,x=>x.n)||1);const u=k.map(x=>Math.min(1,pb+3*Math.sqrt(pb*(1-pb)/x.n))),l=k.map(x=>Math.max(0,pb-3*Math.sqrt(pb*(1-pb)/x.n)));
+const out=D.filter((d,i)=>k[i].ea/k[i].n>u[i]||k[i].ea/k[i].n<l[i]).map(d=>d[0]);
+return C(`p-Control chart — daily error-audit rate (mean ${pct(pb)}, ±3σ)`,plot({labels:D.map(d=>d[0]),series:[{v:k.map(x=>x.ea/x.n*100),n:'Error rate %'},{v:k.map(_=>pb*100),c:PAL[3],d:1,nop:1,n:'Mean'},{v:u.map(x=>x*100),c:PAL[1],d:1,nop:1,n:'UCL'},{v:l.map(x=>x*100),c:PAL[1],d:1,nop:1,n:'LCL'}],y0:0}))+`<p class="mut">${out.length?'Out-of-control days: '+out.join(', '):'No days outside control limits.'}</p>`},
+run(){const D=days(),a=D.map(d=>kpi(d[1]).acc*100),md=a.length?[...a].sort((x,y)=>x-y)[a.length>>1]:0;return C('Run chart — daily accuracy % with median',plot({labels:D.map(d=>d[0]),series:[{v:a,n:'Accuracy %'},{v:a.map(_=>md),d:1,nop:1,c:PAL[2],n:'Median '+md.toFixed(1)}],y0:0,y1:100}))},
+fishbone(){return C('Fishbone (Ishikawa) — defect counts per branch',fish())+C('How each defect category was placed on the fishbone',fishMap())},
+why(){const E=R.filter(r=>r.err);if(!E.length)return C('5 Why',none);const g=[...grp(E,r=>r.name)].sort((a,b)=>b[1].length-a[1].length);WH=g;const sel=whySel();
+if(WA){const x=g.find(y=>y[0]==WA);return sel+`<p class="mut">${x[1].length} errored account(s) for ${esc(WA)} - each has its own 5 Why below.</p>`+x[1].map(acctCard).join('')}
+return sel+g.map(([n,a],i)=>`<details ontoggle="whFill(this,${i})" style="margin-bottom:8px"><summary style="cursor:pointer;padding:6px 0"><b>${esc(n)}</b> <span class="mut">- ${a.length} errored account(s) - click to open all their 5 Whys</span></summary><div></div></details>`).join('')},
+capaDef(){const rd=new Date(M0.rd||Date.now()),dd=n=>new Date(rd.getTime()+n*864e5).toISOString().slice(0,10);
+return C('CAPA — suggested corrective & preventive actions',tbl(['Defect','Corrective (fix now)','Preventive (stop recurrence)','Owner','Due'],pareto().slice(0,8).map(([c,n])=>{const a=DR.filter(d=>d.c==c),o=[...grp(a,x=>x.r.sup)].sort((p,q)=>q[1].length-p[1].length)[0][0],who=[...grp(a,x=>x.r.name)].sort((p,q)=>q[1].length-p[1].length).slice(0,3).map(x=>x[0]);
+return[esc(c)+` <span class="mut">(${n})</span>`,`Re-work ${new Set(a.map(x=>x.r.acct)).size} affected accounts ($${fmt(sum(a,x=>x.r.rev/(x.r.cats.length||1)))}); feedback to associate(s).`,`Add checklist/hard-stop for ${esc(M0.defs[c]?.CTQ||'this step')}; refresher for ${esc(who.join(', '))}; weekly trend review. Goal: −50% in 4 weeks.`,esc(o),`${dd(7)} / ${dd(30)}`]})))},
+capa(){return whySel()+capaAcct()+this.capaDef()},
+assoc(){return score(r=>r.name,'Associate')},sup(){return score(r=>r.sup,'Supervisor')},ins(){return score(r=>r.ins,'Insurance')},
+ctq(){const G=[...grp(DR,d=>d.d.CTQ||'Unmapped')].map(([k,a])=>({k,n:a.length,rev:sum(a,x=>x.r.rev/(x.r.cats.length||1)),im:impact(a[0]),w:a[0].d.Weightage})).sort((a,b)=>b.n-a.n);
+return C('CTQ dashboard — defects by Critical-To-Quality',plot({labels:G.map(g=>g.k),series:[{bar:1,v:G.map(g=>g.n)}]}))+C('CTQ detail',tbl(['CTQ','Defects','Weightage','Impact class','Revenue impact'],G.map(g=>[esc(g.k),g.n,g.w??'',esc(g.im),'$'+fmt(g.rev)])))},
+leak(){const by=f=>[...grp(DR,f)].map(([k,a])=>[k,sum(a,x=>x.r.rev/(x.r.cats.length||1))]).sort((a,b)=>b[1]-a[1]),im=by(impact),su=by(d=>d.r.sup),top=R.filter(r=>r.err).sort((a,b)=>b.rev-a.rev).slice(0,10);
+return`<div class="k"><div class="c"><span>Revenue at risk</span><b class="rd">$${fmt(sum(R,r=>r.rev))}</b></div><div class="c"><span>Errored accounts</span><b>${R.filter(r=>r.err).length}</b></div></div><div class="g2">`+C('Leakage by impact class',plot({labels:im.map(x=>x[0]),series:[{bar:1,v:im.map(x=>x[1]),c:PAL[1]}]}))+C('Leakage by supervisor',plot({labels:su.map(x=>x[0]),series:[{bar:1,v:su.map(x=>x[1]),c:PAL[2]}]}))+'</div>'+
+C('Top 10 accounts by revenue impact',tbl(['Account','Associate','Insurance','Categories','Revenue'],top.map(r=>[esc(r.acct),esc(r.name),esc(r.ins),esc(r.cats.join('; ')),'$'+fmt(r.rev)])))+'<p class="mut">Revenue impact uses the workbook\'s Revenue Impact column when numeric, otherwise the Total Billed Charges of the errored account.</p>'},
+reb(){const E=R.filter(r=>r.err),G=[...grp(E,r=>r.reb||'No rebuttal')].map(([k,a])=>[k,a.length]);return C('Rebuttal tracking — errored audits by rebuttal outcome',plot({labels:G.map(x=>x[0]),series:[{bar:1,v:G.map(x=>x[1])}]}))+C('Rebuttal log',tbl(['Associate','Account','Category','Rebuttal'],E.filter(r=>r.reb).map(r=>[esc(r.name),esc(r.acct),esc(r.cats.join('; ')),esc(r.reb)])))}};
+const NAV=[['Home','home'],['Overview','overview'],['Quality tools'],['Check Sheet','check'],['Pareto','pareto'],['Histogram','hist'],['Scatter','scatter'],['Control Chart','control'],['Run Chart','run'],['Fishbone','fishbone'],['Problem solving'],['5 Why','why'],['CAPA','capa'],['AI Copilot','ai'],['Coaching','coach'],['Audit Log','log'],['Dashboards'],['Heatmap','heat'],['Associates','assoc'],['Supervisors','sup'],['Insurance','ins'],['CTQ','ctq'],['Revenue Leakage','leak'],['Rebuttals','reb'],['Workspace'],['Snapshots','snap'],['Data Quality','dq']];
+const ICO={overview:'layout-dashboard',check:'list-checks',pareto:'bar-chart-3',hist:'bar-chart',scatter:'git-commit',control:'activity',run:'trending-up',fishbone:'fish',why:'help-circle',capa:'clipboard-check',ai:'sparkles',coach:'graduation-cap',log:'scroll-text',assoc:'user',sup:'users',ins:'shield',ctq:'target',leak:'dollar-sign',reb:'message-square',home:'home',heat:'grid-3x3',dq:'shield-check',snap:'camera'};
+$('#nav').innerHTML=NAV.map(n=>n[1]?`<a data-k="${n[1]}"><i data-lucide="${ICO[n[1]]||'circle'}"></i>${n[0]}</a>`:`<small>${n[0]}</small>`).join('');
+try{lucide.createIcons()}catch(e){}
+const clk=()=>{$('#clk').textContent=new Date().toLocaleString([],{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})};clk();setInterval(clk,30000);
+$('#nav').onclick=e=>{const a=e.target.closest('a');if(a&&a.dataset.k){cur=a.dataset.k;draw()}};
+function filt(){const q=[['s1','sup'],['s2','week'],['s3','act'],['s4','name'],['s5','ins']];R=M0.all.filter(r=>q.every(([id,k])=>!$('#'+id).value||r[k]==$('#'+id).value));DR=R.flatMap(r=>(r.cats.length?r.cats:(r.err?['(Uncategorised)']:[])).map(c=>({c,r,d:M0.defs[c]||{}})))}
+function draw(){if(!M0)return;CQ=[];filt();document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.k==cur));$('#v').innerHTML=`<h2>${NAV.find(n=>n[1]==cur)[0]} <span class="mut" style="font-size:12px">${R.length} audits · report date ${M0.rd}</span></h2>`+V[cur]();mount()}
+function load(wb){M0=build(wb);M0.all=M0.R;const o=(id,l,k)=>{const v=[...new Set(M0.all.map(r=>r[k]).filter(Boolean))].sort();$('#'+id).innerHTML=`<option value="">${l}</option>`+v.map(x=>`<option>${esc(x)}</option>`).join('');$('#'+id).onchange=draw};o('s1','All supervisors','sup');o('s2','All weeks','week');o('s3','All activity types','act');o('s4','All associates','name');o('s5','All insurance / payers','ins');$('#tt').value=Math.round(M0.tgt*1000)/10;$('#st').textContent='Sheets detected: '+M0.sheets.join(', ');draw()}
+/* SheetJS when available (reads cached cell values, dates stay serials); otherwise the built-in reader */
+async function readWb(f){const buf=await f.arrayBuffer();if(typeof XLSX==='undefined')return readXlsx(buf);const w=XLSX.read(buf,{type:'array'}),o={};w.SheetNames.forEach(n=>o[n]=XLSX.utils.sheet_to_json(w.Sheets[n],{header:1,raw:true}).map(r=>Array.from(r)));return o}
+const up=async f=>{try{load(await readWb(f))}catch(x){$('#v').innerHTML='<div class="c rd">Could not read workbook: '+esc(x.message)+'</div>'}};
+$('#f').onchange=e=>up(e.target.files[0]);
+if(document.body){document.body.ondragover=e=>e.preventDefault();document.body.ondrop=e=>{e.preventDefault();if(e.dataTransfer.files[0])up(e.dataTransfer.files[0])}}
+function demo(){const defs=[['Call not placed','Incorrect Follow Up','CONTACTED INSURANCE',1,'Critical Impact'],['Eligibility Response not checked','Incorrect Follow Up','CONTACTED INSURANCE',1,'Critical Impact'],['Incorrect action code','Documentation','KEY INFO',1,'Critical Impact'],['Notes not updated','Documentation','ACCOUNT ACTIVITY / ACTION LOG / BDC',.5,'Moderate Impact'],['Template not followed','Documentation','Documentation',.25,'Low Impact'],['Wrong adjustment applied','Incorrect Follow Up','ADJUSTMENT / NRP / BALANCE TRANSFER',1,'Critical Impact']],
+A=['Rao, Anil','Devi, Sita','Khan, Imran','Sharma, Ravi','Naidu, Lata','Singh, Priya','Das, Mohan','Roy, Asha'],S=['Kothapalli Preethi','Sunar Meena'],I=['BCBS','UHC','AETNA','HEALTHNET'];let s=7;const rnd=()=>(s=(s*16807)%2147483647)/2147483647,pk=a=>a[Math.floor(rnd()*a.length)];
+const H=['Emp ID','Associate Name','Supervisor Name','Total Billed Charges','Account#','Week','Audit Date','Audit Status','Error Categories','Activity Type','# of Error','DPO','Insurance','Rebuttal','Duration (months)'],rows=[H];
+for(let i=0;i<260;i++){const ai=Math.floor(rnd()*A.length),d=Math.floor(i/26),err=rnd()<.06+ai*.025,df=pk(defs.slice(0,2+ai%5));rows.push([1000+ai,A[ai],S[ai%2],Math.round(2000+rnd()*60000),String(9e6+i),'Week '+(1+(d>4)),46328+d+(d>4?2:0),err?'Error':'No Error',err?df[0]:'',err?df[1]:'',err?1:0,1,pk(I),err&&rnd()<.3?pk(['Accepted','Rejected']):'',2+ai*2])}
+load({'Audit Data':rows,'List of Defects':[['Error Category','Explanation','Activity Type','Weightage','CTQ','Revenue Impact'],...defs.map(d=>[d[0],'Demo defect: '+d[0],d[1],d[3],d[2],d[4]])],Production:[],Dashboard:[]})}
+function xlsOut(){if(!M0)return;const k=kpi(R),sh={KPIs:[['Audits','Defects','Error audits','Accuracy','DPU','DPO','Revenue impact'],[k.n,k.e,k.ea,k.acc??0,k.dpu??0,k.dpo,k.rev]],Pareto:[['Category','Count'],...pareto()]};
+[['Associates',r=>r.name],['Supervisors',r=>r.sup],['Insurance',r=>r.ins]].forEach(([n,f])=>sh[n]=[[n,'Audits','Defects','Accuracy','DPU','DPO','Revenue'],...[...grp(R,f)].map(([g,a])=>{const x=kpi(a);return[g,x.n,x.e,x.acc,x.dpu,x.dpo,x.rev]})]);
+if(typeof XLSX!=='undefined'){const wb=XLSX.utils.book_new();for(const[n,r]of Object.entries(sh))XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(r),n);XLSX.writeFile(wb,'QA_Quality_Report.xlsx');return}
+let x='<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">';
+for(const[n,r]of Object.entries(sh))x+=`<Worksheet ss:Name="${n}"><Table>`+r.map(a=>'<Row>'+a.map(v=>typeof v=='number'?`<Cell><Data ss:Type="Number">${v}</Data></Cell>`:`<Cell><Data ss:Type="String">${esc(v)}</Data></Cell>`).join('')+'</Row>').join('')+'</Table></Worksheet>';
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([x+'</Workbook>'],{type:'application/vnd.ms-excel'}));a.download='QA_Quality_Report.xls';a.click()}
+function csvOut(){if(!M0)return;const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"',h=['Date','Associate','Supervisor','Account','Insurance','Categories','Defects','Revenue','Rebuttal'];
+const t=[h.join(','),...R.filter(r=>r.err).map(r=>[r.date,r.name,r.sup,r.acct,r.ins,r.cats.join('; '),r.n,r.rev,r.reb].map(q).join(','))].join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv'}));a.download='errored_audits.csv';a.click()}
+/* PDF: rasterise the active view with html2canvas and paginate onto A4 with jsPDF */
+async function pdfOut(){if(!M0)return;if(typeof html2canvas==='undefined'||!window.jspdf)return alert('jsPDF / html2canvas did not load (check CDN access). Use the browser print dialog instead.');
+const c=await html2canvas($('#v'),{scale:1.5,backgroundColor:getComputedStyle(document.documentElement).getPropertyValue('--g1').trim()||'#fff'}),pdf=new jspdf.jsPDF('p','mm','a4'),w=210,ph=297,h=c.height*w/c.width,img=c.toDataURL('image/jpeg',.92);
+for(let y=0;y<h;y+=ph){if(y)pdf.addPage();pdf.addImage(img,'JPEG',0,-y,w,h)}pdf.save('QA_Quality_'+cur+'.pdf')}
+/* PowerPoint: executive deck built with PptxGenJS (native, editable charts) */
+function pptOut(){if(!M0)return alert('Load data first.');if(typeof PptxGenJS==='undefined')return alert('PptxGenJS did not load (check CDN access).');
+const p=new PptxGenJS(),k=kpi(R);p.layout='LAYOUT_WIDE';const T=(s,t)=>s.addText(t,{x:.5,y:.3,w:12,h:.6,fontSize:26,bold:true,color:'1B2335'});
+let s=p.addSlide();s.addText('Quality Intelligence Report',{x:.7,y:2.4,w:12,fontSize:38,bold:true,color:'1B2335'});s.addText(`Summit Health · report date ${M0.rd} · ${R.length} audits`,{x:.7,y:3.4,w:12,fontSize:18,color:'5D6882'});
+s=p.addSlide();T(s,'Executive KPIs');[['Audits',k.n],['Defects',k.e],['Accuracy',pct(k.acc)],['DPU',k.dpu==null?'–':k.dpu.toFixed(3)],['DPO',k.dpo.toFixed(3)],['Revenue exposure','$'+fmt(k.rev)]].forEach(([l,v],i)=>{const x=.5+i%3*4.1,y=1.3+Math.floor(i/3)*2.2;s.addShape(p.ShapeType.rect,{x,y,w:3.8,h:1.8,fill:{color:'F3F5FA'},line:{color:'DDE3EF'}});s.addText(String(v),{x,y:y+.2,w:3.8,h:.9,align:'center',fontSize:30,bold:true,color:'E95420'});s.addText(l,{x,y:y+1.1,w:3.8,h:.5,align:'center',fontSize:14,color:'5D6882'})});
+const d=document.createElement('div');d.innerHTML=V.insights();s=p.addSlide();T(s,'Key insights');s.addText([...d.querySelectorAll('li')].map(l=>({text:l.textContent,options:{bullet:true,breakLine:true}})),{x:.6,y:1.3,w:12,h:5,fontSize:16,color:'1B2335',valign:'top'});
+const bar=(t,L,v)=>{const q=p.addSlide();T(q,t);if(!L.length)q.addText('No data for current filters.',{x:.6,y:1.5,fontSize:16});else q.addChart(p.charts.BAR,[{name:t,labels:L,values:v}],{x:.5,y:1.2,w:12,h:5.6,catAxisLabelFontSize:10,valAxisLabelFontSize:10,chartColors:['E95420']})};
+const P=pareto();bar('Pareto — defects by category',P.map(x=>x[0]),P.map(x=>x[1]));
+const sg=[...grp(R,r=>r.sup)].map(([n,a])=>[n,+(kpi(a).acc*100).toFixed(1)]);bar('Accuracy % by supervisor',sg.map(x=>x[0]),sg.map(x=>x[1]));
+const lg=[...grp(DR,impact)].map(([n,a])=>[n,Math.round(sum(a,x=>x.r.rev/(x.r.cats.length||1)))]);bar('Revenue leakage by impact class ($)',lg.map(x=>x[0]),lg.map(x=>x[1]));
+s=p.addSlide();T(s,'Top defects & CTQ');const H=t=>({text:t,options:{bold:true,fill:{color:'EEF2FA'}}});s.addTable([[H('Defect'),H('Count'),H('CTQ'),H('Impact')],...P.slice(0,8).map(([c,n])=>[c,String(n),M0.defs[c]?.CTQ||'',M0.defs[c]?.['Revenue Impact']||''])],{x:.5,y:1.3,w:12,fontSize:12,colW:[5,1,4,2]});
+p.writeFile({fileName:'QA_Quality_Report.pptx'})}
+const PALS={ubuntu:['#e95420','#c7162b','#f99b11','#3eb34f','#19b6ee'],modern:['#5e6ad2','#e5484d','#f5a623','#30a46c','#3e9bff']};
+function setStyle(v){document.documentElement.dataset.s=v;PAL=PALS[v];try{localStorage.qas=v}catch(e){}}
+function sty(){setStyle(document.documentElement.dataset.s=='modern'?'ubuntu':'modern');draw()}
+try{if(localStorage.qas)setStyle(localStorage.qas)}catch(e){}
+/* Command palette (Ctrl/Cmd+K): jump to any view or run any action */
+const ACT=[['Upload workbook',()=>f.click()],['Load demo data',()=>demo()],['Export Excel',()=>xlsOut()],['Export CSV',()=>csvOut()],['Export PDF',()=>pdfOut()],['Export PowerPoint',()=>pptOut()],['Explain current view (AI)',()=>explain()],['Toggle dark / light',()=>tg()],['Switch layout style',()=>sty()]];
+let cpi=0,cpa=[];
+function cpOpen(){$('#cp').hidden=false;$('#cpi').value='';cpF();$('#cpi').focus()}
+function cpF(){const q=$('#cpi').value.toLowerCase();cpa=[...NAV.filter(n=>n[1]).map(n=>['Go to '+n[0],()=>{cur=n[1];draw()}]),...ACT].filter(a=>a[0].toLowerCase().includes(q));cpi=0;cpR()}
+function cpR(){$('#cpl').innerHTML=cpa.map((a,i)=>`<div class="${i==cpi?'on':''}" onclick="cpGo(${i})">${esc(a[0])}</div>`).join('')||'<div class="mut" style="padding:9px 14px">No match</div>'}
+function cpGo(i){const a=cpa[i];$('#cp').hidden=true;if(a)a[1]()}
+$('#cpi').oninput=cpF;
+if(document.addEventListener)document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()=='k'){e.preventDefault();cpOpen()}else if(!$('#cp').hidden){if(e.key=='Escape')$('#cp').hidden=true;else if(e.key=='ArrowDown'){cpi=Math.min(cpi+1,cpa.length-1);cpR();e.preventDefault()}else if(e.key=='ArrowUp'){cpi=Math.max(cpi-1,0);cpR();e.preventDefault()}else if(e.key=='Enter')cpGo(cpi)}});
+function tg(){const h=document.documentElement;h.dataset.t=h.dataset.t=='dark'?'light':'dark';try{localStorage.qat=h.dataset.t}catch(e){}draw()}
+try{if(localStorage.qat)document.documentElement.dataset.t=localStorage.qat}catch(e){}
+</script></body></html>
